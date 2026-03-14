@@ -1,0 +1,7 @@
+mailo.db
+*.mbox
+plugin.json.old
+BUILD-BRIEF.md
+__pycache__/
+.DS_Store
+*.plugin
