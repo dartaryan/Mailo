@@ -1,0 +1,27 @@
+{
+  "name": "mailo-marketplace",
+  "displayName": "Mailo - Biographical Intelligence Engine",
+  "description": "Processes personal email archives into structured life records — people, eras, events, behavioral patterns, and deep psychological insights.",
+  "owner": {
+    "name": "Ben Akiva",
+    "email": "benakiva1991@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "mailo",
+      "source": "./",
+      "version": "0.2.0",
+      "description": "Biographical intelligence engine that processes personal email archives into structured life records with people mapping, timeline construction, gap analysis, and deep insights.",
+      "category": "productivity",
+      "keywords": [
+        "email",
+        "biography",
+        "intelligence",
+        "archive",
+        "life-record",
+        "timeline",
+        "people"
+      ]
+    }
+  ]
+}
