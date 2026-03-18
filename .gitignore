@@ -2,6 +2,10 @@
 mailo.db
 *.mbox
 inbox/
+state/
+
+# Internal docs
+docs/
 
 # Build artifacts
 *.plugin
@@ -15,6 +19,3 @@ Thumbs.db
 
 # Local config
 .claude/
-
-# Obsolete
-docs/how-to-work-with-mailo.html
