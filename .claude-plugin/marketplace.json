@@ -10,7 +10,7 @@
     {
       "name": "mailo",
       "source": "./",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "description": "Biographical intelligence engine that processes personal email archives into structured life records with people mapping, timeline construction, gap analysis, and deep insights.",
       "category": "productivity",
       "keywords": [

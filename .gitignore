@@ -1,7 +1,20 @@
+# Data
 mailo.db
 *.mbox
-plugin.json.old
+inbox/
+
+# Build artifacts
+*.plugin
 BUILD-BRIEF.md
+plugin.json.old
+
+# System
 __pycache__/
 .DS_Store
-*.plugin
+Thumbs.db
+
+# Local config
+.claude/
+
+# Obsolete
+docs/how-to-work-with-mailo.html

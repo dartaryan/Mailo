@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="מיילו - סוכן מודיעין ביוגרפי שהופך את ארכיון המיילים שלך לסיפור חיים מובנה">
+<title>מיילו</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;500;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0e1a;--bg2:#111827;
+  --user-bg:rgba(255,255,255,0.05);--user-b:rgba(255,255,255,0.1);
+  --mailo-bg:rgba(220,38,38,0.06);--mailo-b:rgba(220,38,38,0.08);
+  --accent:#DC2626;
+  --text:#e8e0d8;--bright:#f5f0eb;--muted:#7a7068;
+  --font:'Heebo',sans-serif;--mono:'JetBrains Mono',monospace;
+  --ease:cubic-bezier(0.16,1,0.3,1);
+}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
+body{
+  font-family:var(--font);font-size:17px;font-weight:300;
+  line-height:1.8;color:var(--text);
+  background:linear-gradient(180deg,var(--bg),var(--bg2));
+  background-attachment:fixed;min-height:100vh;overflow-x:hidden;
+}
+
+/* Skip link */
+.skip{position:absolute;top:-100%;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;padding:8px 16px;border-radius:4px;z-index:200;font-size:14px;text-decoration:none}
+.skip:focus{top:8px}
+
+/* Progress bar */
+.progress{position:fixed;top:0;left:0;right:0;height:2px;background:var(--accent);z-index:100;transform:scaleX(0);transform-origin:right}
+
+/* Ambient */
+.ambient{
+  position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:radial-gradient(ellipse at 30% 20%,rgba(220,38,38,0.03),transparent 50%),
+             radial-gradient(ellipse at 70% 70%,rgba(80,100,200,0.02),transparent 50%);
+  animation:drift 40s ease-in-out infinite alternate;
+}
+@keyframes drift{to{transform:translate(-40px,30px)}}
+
+/* Hero */
+.hero{
+  min-height:100dvh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  text-align:center;padding:24px;
+}
+.hero-icon{font-size:56px;line-height:1}
+.hero h1{font-size:clamp(40px,10vw,64px);font-weight:700;color:var(--bright);line-height:1.1;margin:16px 0}
+.hero-sub{font-size:clamp(16px,3vw,20px);color:var(--text);max-width:480px;margin-bottom:48px}
+.hero-hint{font-size:14px;color:var(--muted)}
+.hero-hint .arrow{display:inline-block;animation:bob 2s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
+.hero>*{opacity:0;transform:translateY(20px);animation:fadeUp 0.8s var(--ease) forwards}
+.hero>*:nth-child(1){animation-delay:0.1s}
+.hero>*:nth-child(2){animation-delay:0.3s}
+.hero>*:nth-child(3){animation-delay:0.5s}
+.hero>*:nth-child(4){animation-delay:0.7s}
+@keyframes fadeUp{to{opacity:1;transform:translateY(0)}}
+
+/* Thread */
+.thread{max-width:720px;margin:0 auto;padding:0 24px 120px}
+
+/* Timestamps */
+.ts{display:block;text-align:center;color:var(--muted);font-size:13px;padding:40px 0 20px;font-weight:300}
+
+/* Messages */
+.msg{max-width:80%;padding:16px 20px;margin-bottom:12px;opacity:0;transition:opacity 0.3s var(--ease),transform 0.5s var(--ease)}
+.msg--user{
+  margin-inline-end:auto;
+  background:var(--user-bg);border:1px solid var(--user-b);
+  border-radius:16px 16px 4px 16px;
+  transform:translateX(-30px);
+}
+.msg--mailo{
+  margin-inline-start:auto;
+  background:var(--mailo-bg);border:1px solid var(--mailo-b);
+  border-radius:16px 16px 16px 4px;
+  transform:translateX(30px);
+}
+.msg.is-visible{opacity:1;transform:translateX(0)}
+
+/* Mailo child stagger */
+.msg--mailo>*{opacity:0;transition:opacity 0.4s var(--ease)}
+.msg--mailo.is-visible>*{opacity:1}
+.msg--mailo.is-visible>*:nth-child(2){transition-delay:.1s}
+.msg--mailo.is-visible>*:nth-child(3){transition-delay:.2s}
+.msg--mailo.is-visible>*:nth-child(4){transition-delay:.25s}
+.msg--mailo.is-visible>*:nth-child(5){transition-delay:.3s}
+.msg--mailo.is-visible>*:nth-child(6){transition-delay:.35s}
+.msg--mailo.is-visible>*:nth-child(7){transition-delay:.4s}
+
+/* Message content */
+.msg p{margin-bottom:10px}.msg p:last-child{margin-bottom:0}
+.msg strong{font-weight:700;color:var(--bright)}
+.msg em{font-style:normal;color:var(--bright);font-weight:500}
+.sn{color:var(--accent)}
+code{
+  font-family:var(--mono);font-size:0.88em;
+  direction:ltr;unicode-bidi:embed;
+  color:var(--accent);background:rgba(255,255,255,0.06);
+  padding:1px 5px;border-radius:3px;
+}
+
+/* Mailo tag */
+.tag{display:block;font-size:12px;color:var(--accent);font-weight:500;margin-bottom:8px}
+
+/* Typing indicator */
+.typing{
+  display:flex;gap:5px;align-items:center;
+  padding:14px 20px;max-width:80px;
+  margin-inline-start:auto;margin-bottom:12px;
+  background:var(--mailo-bg);border:1px solid var(--mailo-b);
+  border-radius:16px 16px 16px 4px;
+  opacity:0;transition:opacity 0.3s;
+}
+.typing.show{opacity:1}
+.typing span{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--accent);opacity:0.4;
+  animation:bounce 1.2s ease-in-out infinite;
+}
+.typing span:nth-child(2){animation-delay:.15s}
+.typing span:nth-child(3){animation-delay:.3s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-6px);opacity:1}}
+
+/* Pipeline */
+.pipeline{
+  display:flex;align-items:flex-start;justify-content:center;
+  direction:rtl;padding:24px 0;margin:12px 0;
+  overflow-x:auto;scrollbar-width:none;
+}
+.pipeline::-webkit-scrollbar{display:none}
+.pipe-node{display:flex;flex-direction:column;align-items:center;gap:8px;flex-shrink:0}
+.pipe-dot{
+  width:18px;height:18px;border-radius:50%;
+  border:2px solid var(--muted);
+  transition:border-color 0.3s,box-shadow 0.3s;
+}
+.pipe-node.lit .pipe-dot{border-color:var(--accent);box-shadow:0 0 10px rgba(220,38,38,0.4)}
+.pipe-label{font-size:10px;color:var(--muted);white-space:nowrap;transition:color 0.3s}
+.pipe-node.lit .pipe-label{color:var(--text)}
+.pipe-line{
+  width:28px;height:2px;margin-top:8px;flex-shrink:0;
+  background:var(--muted);
+  transform:scaleX(0);transform-origin:right;
+  transition:transform 0.3s var(--ease),background-color 0.3s;
+}
+.pipe-line.lit{transform:scaleX(1);background:var(--accent)}
+
+/* Funnel */
+.funnel{max-width:520px;margin:16px auto;padding:8px 0}
+.fn-row{
+  margin:0 auto 8px;width:var(--w);
+  transform:scaleX(0);transform-origin:center;opacity:0;
+  transition:transform 0.6s var(--ease),opacity 0.6s var(--ease);
+  transition-delay:var(--d);
+}
+.funnel.is-visible .fn-row{transform:scaleX(1);opacity:1}
+.fn-bar{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:6px}
+.fn-n{color:var(--bright);font-weight:700;font-size:13px;flex-shrink:0}
+.fn-name{font-size:13px;font-weight:500;color:var(--text);flex:1}
+.fn-cost{font-family:var(--mono);font-size:11px;color:var(--muted);direction:ltr;flex-shrink:0}
+.fn-sig{font-size:10px;color:var(--muted);padding-top:2px;padding-inline-start:30px}
+.fn-row:nth-child(1) .fn-bar{background:rgba(100,140,180,0.12);border:1px solid rgba(100,140,180,0.2)}
+.fn-row:nth-child(2) .fn-bar{background:rgba(110,140,170,0.12);border:1px solid rgba(110,140,170,0.2)}
+.fn-row:nth-child(3) .fn-bar{background:rgba(130,130,160,0.12);border:1px solid rgba(130,130,160,0.2)}
+.fn-row:nth-child(4) .fn-bar{background:rgba(150,120,140,0.12);border:1px solid rgba(150,120,140,0.2)}
+.fn-row:nth-child(5) .fn-bar{background:rgba(220,38,38,0.1);border:1px solid rgba(220,38,38,0.25);box-shadow:0 0 12px rgba(220,38,38,0.12)}
+
+/* Pull quote */
+.quote{
+  text-align:center;font-size:1.2em;font-weight:500;
+  color:var(--bright);padding:28px 20px;margin:20px 0;
+  opacity:0;transition:opacity 0.6s var(--ease);
+}
+.quote.is-visible{opacity:1;animation:glow 2s var(--ease) forwards}
+@keyframes glow{
+  0%{box-shadow:0 0 0 rgba(220,38,38,0)}
+  50%{box-shadow:0 0 60px rgba(220,38,38,0.2)}
+  100%{box-shadow:0 0 40px rgba(220,38,38,0.1)}
+}
+
+/* Footer */
+.footer{
+  text-align:center;padding:64px 24px 40px;
+  border-top:1px solid rgba(255,255,255,0.06);
+  max-width:720px;margin:0 auto;
+}
+.footer p:first-child{font-size:clamp(18px,3vw,22px);color:var(--bright);font-weight:500;margin-bottom:12px}
+.footer .ver{font-size:13px;color:var(--muted)}
+
+/* Responsive */
+@media(max-width:600px){
+  .msg{max-width:92%}
+  .thread{padding:0 16px 80px}
+  .pipeline{justify-content:flex-start;padding:16px 0}
+  .funnel{max-width:100%}
+  .fn-sig{display:none}
+}
+
+/* Reduced motion */
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+  .msg,.msg>*,.typing,.quote,.fn-row,.pipe-dot,.pipe-line,.hero>*{opacity:1!important;transform:none!important;visibility:visible!important}
+  .ambient{animation:none}
+}
+</style>
+</head>
+<body>
+<a href="#chat" class="skip">דלג לתוכן</a>
+<div class="progress" aria-hidden="true"></div>
+<div class="ambient" aria-hidden="true"></div>
+
+<header class="hero">
+  <div class="hero-icon" aria-hidden="true">💌</div>
+  <h1>אני מיילו</h1>
+  <p class="hero-sub">אני הופך את ארכיון המיילים שלך לסיפור חיים מובנה. ככה זה עובד.</p>
+  <p class="hero-hint" aria-hidden="true">גלול, אני אסביר <span class="arrow">&#8595;</span></p>
+</header>
+
+<main id="chat" class="thread">
+
+<!-- Exchange 1 -->
+<time class="ts">1:47</time>
+<div class="msg msg--user" data-reveal>
+  <p>אוקיי מיילו, אני רוצה להתחיל. מה עושים?</p>
+</div>
+<div class="typing" aria-hidden="true"><span></span><span></span><span></span></div>
+<div class="msg msg--mailo" data-typing data-reveal>
+  <span class="tag">💌 מיילו</span>
+  <p>לפני שנצלול - בוא נבין מה הולך לקרות פה. התהליך הוא לא "תלחץ כפתור ותקבל סיכום". זה מסע שאנחנו עושים ביחד, אתה ואני, צעד אחרי צעד. אני עושה את העבודה הכבדה, אבל אתה מי שמכיר את החיים שלך - אז יהיו רגעים שאני אצטרך אותך.</p>
+  <p>הנה התמונה הכללית:</p>
+</div>
+
+<div class="pipeline" data-reveal>
+  <div class="pipe-node"><div class="pipe-dot"></div><span class="pipe-label">ייצוא</span></div>
+  <div class="pipe-line"></div>
+  <div class="pipe-node"><div class="pipe-dot"></div><span class="pipe-label">קליטה</span></div>
+  <div class="pipe-line"></div>
+  <div class="pipe-node"><div class="pipe-dot"></div><span class="pipe-label">ניפוי</span></div>
+  <div class="pipe-line"></div>
+  <div class="pipe-node"><div class="pipe-dot"></div><span class="pipe-label">זיהוי אנשים</span></div>
+  <div class="pipe-line"></div>
+  <div class="pipe-node"><div class="pipe-dot"></div><span class="pipe-label">ציר זמן</span></div>
+  <div class="pipe-line"></div>
+  <div class="pipe-node"><div class="pipe-dot"></div><span class="pipe-label">פערים</span></div>
+  <div class="pipe-line"></div>
+  <div class="pipe-node"><div class="pipe-dot"></div><span class="pipe-label">תובנות</span></div>
+  <div class="pipe-line"></div>
+  <div class="pipe-node"><div class="pipe-dot"></div><span class="pipe-label">סדר בג'ימייל</span></div>
+</div>
+
+<div class="msg msg--mailo" data-reveal>
+  <p>שמונה שלבים. חלקם אוטומטיים לחלוטין, חלקם דורשים ממך כמה דקות, ובסוף - יש לך תיעוד מובנה של החיים שלך ותיבת מייל נקייה. תמיד אפשר לבדוק איפה אנחנו עם <code>/mailo-status</code>. בוא נעבור על כל שלב.</p>
+</div>
+
+<!-- Exchange 2 -->
+<time class="ts">1:50</time>
+<div class="msg msg--user" data-reveal>
+  <p>יאללה, שלב 1?</p>
+</div>
+<div class="typing" aria-hidden="true"><span></span><span></span><span></span></div>
+<div class="msg msg--mailo" data-typing data-reveal>
+  <p><strong><span class="sn">שלב 1:</span> ייצוא</strong> - אתה מוריד את הארכיון שלך</p>
+  <p>הדבר היחיד שאני צריך ממך בשביל להתחיל הוא קובץ <code>MBOX</code> - זה פורמט סטנדרטי שג'ימייל יודע לייצא. נכנסים ל-Google Takeout, מסמנים רק Gmail, ובוחרים ייצוא. תוך כמה שעות (תלוי בגודל) אתה מקבל קובץ ZIP עם כל המיילים שלך.</p>
+  <p>אתה שם את הקובץ בתיקיית <code>inbox/</code> אצלי, מריץ <code>/mailo-ingest</code>, וזהו.</p>
+  <p>(אגב, אם יש לך גם ייצוא וואטסאפ, צילומי מסך, או כל מקור אחר - אני יודע לאכול גם את זה. אבל מייל הוא הבסיס.)</p>
+</div>
+
+<!-- Exchange 3 -->
+<time class="ts">1:53</time>
+<div class="msg msg--user" data-reveal>
+  <p>אוקיי, הורדתי. מה עכשיו?</p>
+</div>
+<div class="typing" aria-hidden="true"><span></span><span></span><span></span></div>
+<div class="msg msg--mailo" data-typing data-reveal>
+  <p><strong><span class="sn">שלב 2:</span> קליטה</strong> <code>/mailo-ingest</code> - אני קורא, מפרסר, ובונה מאגר</p>
+  <p>אני פותח את הקובץ, מפרק כל מייל לשדות (שולח, נמען, תאריך, נושא, גוף, קבצים מצורפים), ובונה מאגר מסודר. אם יש לך 5,000 מיילים, בסוף השלב הזה יש לי טבלה עם 5,000 שורות שאני יכול לחתוך, לסנן, ולנתח.</p>
+  <p>אתה לא צריך לעשות כלום פה. זה רץ אוטומטי.</p>
+</div>
+
+<!-- Exchange 4 -->
+<time class="ts">1:55</time>
+<div class="msg msg--user" data-reveal>
+  <p>ומה קורה עם כל הספאם וההודעות האוטומטיות? יש לי המון זבל שם</p>
+</div>
+<div class="typing" aria-hidden="true"><span></span><span></span><span></span></div>
+<div class="msg msg--mailo" data-typing data-reveal>
+  <p>בדיוק בשביל זה קיים <strong><span class="sn">שלב 3:</span> הנפה</strong> <code>/mailo-sieve</code> - הלב של כל התהליך.</p>
+  <p>הרעיון: הארכיון שלך מלא רעש - התראות, ניוזלטרים, קבלות, ספאם. 60-70% מהמיילים שלך הם לא באמת "שלך". אבל הטריק הוא שגם ברעש יש מידע חשוב, אז אני לא פשוט מוחק - אני <em>סוחט כל שכבה</em> לפני שאני מסנן אותה.</p>
+  <p>חמישה מעברים, אחד אחרי השני:</p>
+</div>
+
+<div class="funnel" data-reveal>
+  <div class="fn-row" style="--w:100%;--d:0ms">
+    <div class="fn-bar"><span class="fn-n">1</span><span class="fn-name">מכונות ואוטומטיים</span><span class="fn-cost">$0</span></div>
+    <div class="fn-sig">הרשמות, זמן שימוש, כתובות ממשלוחים</div>
+  </div>
+  <div class="fn-row" style="--w:68%;--d:200ms">
+    <div class="fn-bar"><span class="fn-n">2</span><span class="fn-name">שיווק וספאם</span><span class="fn-cost">$0</span></div>
+    <div class="fn-sig">מותגים, העדפות, הרגלי קניות</div>
+  </div>
+  <div class="fn-row" style="--w:52%;--d:400ms">
+    <div class="fn-bar"><span class="fn-n">3</span><span class="fn-name">ניוזלטרים</span><span class="fn-cost">$0</span></div>
+    <div class="fn-sig">קהילות, מעורבות, תחומי עניין</div>
+  </div>
+  <div class="fn-row" style="--w:42%;--d:600ms">
+    <div class="fn-bar"><span class="fn-n">4</span><span class="fn-name">טרנזקציות</span><span class="fn-cost">$0</span></div>
+    <div class="fn-sig">טיסות, מגורים, ספקים רפואיים</div>
+  </div>
+  <div class="fn-row" style="--w:34%;--d:800ms">
+    <div class="fn-bar"><span class="fn-n">5</span><span class="fn-name">סיווג תוכן</span><span class="fn-cost">~$0.50</span></div>
+    <div class="fn-sig">סיכום, חשיבות, רגעים מיוחדים</div>
+  </div>
+</div>
+
+<div class="msg msg--mailo" data-reveal>
+  <p>שים לב: ארבעה מעברים ראשונים הם קוד בלבד, אפס עלות. LLM נכנס רק במעבר החמישי, וגם שם זה חצי דולר לכל הארכיון.</p>
+</div>
+
+<blockquote class="quote" data-reveal>הסטטיסטיקה מוצאת את הסיגנל. ה-LLM מספר את הסיפור.</blockquote>
+
+<div class="msg msg--mailo" data-reveal>
+  <p>בסוף הנפה, מה שנשאר הם ה-30-35% של המיילים שבאמת שלך - תכתובות אישיות, עבודה יצירתית, מכתבים, קבצים ששלחת לעצמך. כל השאר סונן, אבל המודיעין שלו כבר אצלי.</p>
+</div>
+
+<!-- Exchange 5 -->
+<time class="ts">2:01</time>
+<div class="msg msg--user" data-reveal>
+  <p>אוקיי, אז עכשיו יש לך רק את המיילים האמיתיים. מה הלאה?</p>
+</div>
+<div class="msg msg--mailo" data-reveal>
+  <p><strong><span class="sn">שלב 4:</span> זיהוי אנשים</strong> <code>/mailo-people</code> - אני בונה את מפת הקשרים שלך</p>
+  <p>אני עובר על כל המיילים שנשארו ובונה ספריית אנשים: מי כל אחד, איך הוא קשור אליך, מתי הוא הופיע ונעלם, איזה כינויים יש לו, ואם הוא מופיע תחת כמה כתובות מייל (אני ממזג אותם). גם אנשים מהשכבות שסוננו מזוהים - אם הזמנת טיסה עם מישהו, זה עדיין נכנס.</p>
+  <p>פה אני עלול לטעות. אני יכול לחשוב ששני אנשים הם אותו אדם, או לפספס קשר חשוב. לכן בשלב הזה אני אראה לך את מה שמצאתי ואבקש אישור. "האם מאיה וולק ומאיה מ-JDC זו אותה אחת?" - ואתה מתקן אותי.</p>
+</div>
+
+<!-- Exchange 6 -->
+<time class="ts">2:04</time>
+<div class="msg msg--user" data-reveal>
+  <p>ואז?</p>
+</div>
+<div class="msg msg--mailo" data-reveal>
+  <p><strong><span class="sn">שלב 5:</span> בניית ציר זמן</strong> <code>/mailo-timeline</code> - אני מחלק את החיים שלך לתקופות</p>
+  <p>על בסיס כל המידע שנאסף (תאריכי מיילים, שינויים בכתובות, מעברים בין שירותים, אנשים שמופיעים ונעלמים) אני מזהה <em>תקופות חיים</em>. לא לפי שנים אלא לפי שינויים אמיתיים - מתי עברת עבודה, מתי נכנסת למערכת יחסים, מתי התחלת ללמוד, מתי טסת.</p>
+  <p>כל תקופה מקבלת שם, טווח תאריכים, אנשים מרכזיים, ואירועים מרכזיים. זה השלד שעליו ייבנה כל מה שאחרי.</p>
+</div>
+
+<!-- Exchange 7 -->
+<time class="ts">2:07</time>
+<div class="msg msg--user" data-reveal>
+  <p>ואם חסר לך מידע?</p>
+</div>
+<div class="msg msg--mailo" data-reveal>
+  <p>בדיוק, <strong><span class="sn">שלב 6:</span> שאלות פערים</strong> <code>/mailo-gaps</code> - אני שואל, אתה עונה</p>
+  <p>בכל שלב אני מזהה חורים: "אני רואה שטסת לבודפשט ב-2017, אבל אני לא יודע עם מי או למה." אני שומר את השאלות האלה, ובמצב פערים אני שואל אותך אחת-אחת, עם הקשר למה אני שואל.</p>
+  <p>זה השלב שבו אתה הכי משפיע. כל תשובה שלך משלימה חלק בפאזל ויכולה לפתוח תובנות חדשות. לפעמים מידע חדש שנכנס (מייצוא וואטסאפ, או תמונות) גם סוגר פערים אוטומטית.</p>
+</div>
+
+<!-- Exchange 8 -->
+<time class="ts">2:11</time>
+<div class="msg msg--user" data-reveal>
+  <p>ומתי מגיעות התובנות?</p>
+</div>
+<div class="msg msg--mailo" data-reveal>
+  <p><strong><span class="sn">שלב 7:</span> תובנות עומק</strong> <code>/mailo-insight</code> - פה זה מתחיל להיות באמת מעניין</p>
+  <p>עכשיו שיש לי את התמונה המלאה - אנשים, ציר זמן, פערים סגורים - אני יכול לחפור. לא רק "מה קרה" אלא "מה זה אומר". דפוסים שחוזרים: האם אתה תמיד יוזם פרידות או תמיד מגיב? האם יש אנשים שמופיעים בכל מעבר חיים? האם הסגנון שלך השתנה עם הזמן?</p>
+  <p>אני עובד ב-9 רמות עומק - משטח (עובדות) דרך ניתוח (דפוסים) ועד עומק (אמיתות שאתה לא בהכרח מודע אליהן). הרמות הגבוהות דורשות LLM, אבל רק על החומר הכי משמעותי - לא על כל 5,000 מיילים.</p>
+  <p>כל תובנה מתחקה חזרה למייל המקורי. אני לא ממציא - אני מראה לך מה נמצא שם ומה זה עלול להגיד.</p>
+</div>
+
+<!-- Exchange 9 -->
+<time class="ts">2:16</time>
+<div class="msg msg--user" data-reveal>
+  <p>ובסוף?</p>
+</div>
+<div class="msg msg--mailo" data-reveal>
+  <p><strong><span class="sn">שלב 8:</span> סדר בג'ימייל</strong> <code>/mailo-execute</code> - אני עוזר לך לנקות ולתייג</p>
+  <p>עכשיו שאנחנו יודעים מה חשוב ומה לא, אני מכין רשימות: מה לשמור (עם תגיות מסודרות), מה למחוק. אבל - וזה חשוב - אני אף פעם לא נוגע בג'ימייל בלי אישור שלך. אני מציע, אתה מאשר, ורק אז אני פועל.</p>
+  <p>מה ששומרים מקבל תגיות מובנות: <code>Life/Szarvas/2016/Memories</code>, <code>People/Gal/Love</code>, <code>Self/Notes</code>. מה שנמחק מקבל תגית <code>_TO_DELETE</code> - ואתה מוחק כשאתה מוכן.</p>
+  <p>בסוף התהליך יש לך: ארכיון מייל נקי ומתויג, ספריית אנשים, ציר זמן, ותיק חיים מובנה עם תובנות. משהו שאף פעם לא היה לך.</p>
+</div>
+
+<!-- Exchange 10 -->
+<time class="ts">2:20</time>
+<div class="msg msg--user" data-reveal>
+  <p>כמה זמן כל זה לוקח?</p>
+</div>
+<div class="msg msg--mailo" data-reveal>
+  <p>תלוי בגודל הארכיון ובכמה עמוק אתה רוצה לצלול. בגדול:</p>
+  <p>שלבים 1-3 (ייצוא, קליטה, ניפוי) - כמה שעות עבודה שלי, דקות של המתנה שלך. אוטומטי ברובו.</p>
+  <p>שלב 4 (אנשים) - סבב אחד של אישורים ממך, 15-30 דקות.</p>
+  <p>שלבים 5-6 (ציר זמן + פערים) - פה זה תלוי בך. אפשר לעבור תקופה אחת בכל ישיבה, או לרוץ על כמה ביחד. אין לחץ.</p>
+  <p>שלבים 7-8 (תובנות + ביצוע) - קורים ברקע לאורך כל הדרך, ומתעמקים ככל שהתמונה משתלמת.</p>
+  <p>העלות? 4-8 דולר לארכיון של 5,000 מיילים. רוב העבודה היא קוד, לא AI.</p>
+</div>
+
+<!-- Exchange 11 -->
+<time class="ts">2:23</time>
+<div class="msg msg--user" data-reveal>
+  <p>נשמע טוב. אני מוכן להתחיל.</p>
+</div>
+<div class="msg msg--mailo" data-reveal>
+  <span class="tag">💌 מיילו</span>
+  <p>אחלה. תתחיל מ-Google Takeout - ברגע שהקובץ אצלך, שים אותו ב-<code>inbox/</code> ותגיד לי. אני אעשה את השאר.</p>
+  <p>ושלושה דברים שחשוב לזכור לאורך הדרך:</p>
+  <p><strong>תתקן אותי</strong> - אם טעיתי במשהו, המילה שלך דורסת את שלי. תמיד.</p>
+  <p><strong>תענה על השאלות</strong> - ככל שתענה יותר, התמונה יותר שלמה.</p>
+  <p><strong>תסמוך על התהליך</strong> - כשאני אומר שמשהו למחיקה, סימן שכבר סחטתי ממנו הכל. אבל אני אף פעם לא מוחק בלעדיך.</p>
+</div>
+
+</main>
+
+<footer class="footer">
+  <p>אני מיילו. הנתונים שלך, המודיעין שלי, הסיפור שלך.</p>
+  <p class="ver">v0.3.0 | מרץ 2026</p>
+</footer>
+
+<script>
+(function(){
+  var rm=matchMedia('(prefers-reduced-motion:reduce)').matches;
+  if(rm){
+    document.querySelectorAll('[data-reveal],.funnel').forEach(function(e){e.classList.add('is-visible')});
+    document.querySelectorAll('.pipe-node,.pipe-line').forEach(function(e){e.classList.add('lit')});
+    document.querySelectorAll('.typing').forEach(function(e){e.style.display='none'});
+    return;
+  }
+  // Progress bar
+  var bar=document.querySelector('.progress');
+  addEventListener('scroll',function(){
+    var h=document.documentElement.scrollHeight-innerHeight;
+    bar.style.transform='scaleX('+(h>0?scrollY/h:0)+')';
+  },{passive:true});
+  // Observer
+  var obs=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(!e.isIntersecting)return;
+      var el=e.target;
+      // Typing indicator
+      if(el.hasAttribute('data-typing')){
+        var typ=el.previousElementSibling;
+        if(typ&&typ.classList.contains('typing')){
+          typ.classList.add('show');
+          setTimeout(function(){
+            typ.style.display='none';
+            el.classList.add('is-visible');
+          },800);
+          obs.unobserve(el);
+          return;
+        }
+      }
+      el.classList.add('is-visible');
+      // Pipeline animation
+      if(el.classList.contains('pipeline')){
+        var items=el.children;
+        for(var i=0;i<items.length;i++){
+          (function(item,delay){
+            setTimeout(function(){item.classList.add('lit')},delay);
+          })(items[i],i*150);
+        }
+      }
+      obs.unobserve(el);
+    });
+  },{threshold:0.15});
+  document.querySelectorAll('[data-reveal]').forEach(function(e){obs.observe(e)});
+})();
+</script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 {
   "name": "mailo",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Biographical intelligence engine that processes personal email archives into structured life records — people, eras, events, behavioral patterns, and deep psychological insights.",
   "author": {
     "name": "Ben Akiva"
